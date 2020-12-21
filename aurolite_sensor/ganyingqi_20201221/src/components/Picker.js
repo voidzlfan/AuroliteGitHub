@@ -160,6 +160,7 @@ class MyPicker extends Component {
           selectedValue={this.state.currentMinute}
           onValueChange={this._handleMinuteChange}
           visibleItemCount={2}
+		  loop={true}
         >
           {this.state.minute.map(value => (
             <Picker.Item key={value} value={value} label={value.toString()} />
