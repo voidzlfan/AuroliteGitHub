@@ -111,31 +111,31 @@ class TestMode extends Component {
     };
   }
 
-  componentWillReceiveProps(props) {
-    const ds1 = zeroFilling(props.debugSet1.toString(2), 32);
-    const ds2 = zeroFilling(props.debugSet2.toString(2), 32);
-    const ds3 = zeroFilling(props.debugSet3.toString(2), 32);
-    const ds4 = zeroFilling(props.debugSet4.toString(2), 32);
+  componentWillReceiveProps(nextProps) {
+    const ds1 = zeroFilling(nextProps.debugSet1.toString(2), 32);
+    const ds2 = zeroFilling(nextProps.debugSet2.toString(2), 32);
+    const ds3 = zeroFilling(nextProps.debugSet3.toString(2), 32);
+    const ds4 = zeroFilling(nextProps.debugSet4.toString(2), 32);
 
     let log = '';
     let logs = this.state.logs;
-    if(this.props.debugData1 !== props.debugData1){
-      log = format(new Date(), '-') + ' debugdata1 ' +  '<上报>：' + props.debugData1;
+    if(this.props.debugData1 !== nextProps.debugData1){
+      log = format(new Date(), '-') + ' debugdata1 ' +  '<上报>：' + nextProps.debugData1;
       logs.push(log);
     }
-    if(this.props.debugData2 !== props.debugData2){
-      log = format(new Date(), '-') + ' debugdata2 ' +  '<上报>：' + props.debugData2;
+    if(this.props.debugData2 !== nextProps.debugData2){
+      log = format(new Date(), '-') + ' debugdata2 ' +  '<上报>：' + nextProps.debugData2;
       logs.push(log);
     }
-    if(this.props.debugData3 !== props.debugData3){
-      log = format(new Date(), '-') + ' debugdata3 ' +  '<上报>：' + props.debugData3;
+    if(this.props.debugData3 !== nextProps.debugData3){
+      log = format(new Date(), '-') + ' debugdata3 ' +  '<上报>：' + nextProps.debugData3;
       logs.push(log);
     }
-    if(this.props.debugData4 !== props.debugData4){
-      log = format(new Date(), '-') + ' debugdata4 ' +  '<上报>：' + props.debugData4;
+    if(this.props.debugData4 !== nextProps.debugData4){
+      log = format(new Date(), '-') + ' debugdata4 ' +  '<上报>：' + nextProps.debugData4;
       logs.push(log);
     }
-    
+
     // const ds1 = '01111111101010101010101010101010';
     // const ds2 = '01111111101010101010101010101010';
     // const ds3 = '01111111101010101010101010101010';
