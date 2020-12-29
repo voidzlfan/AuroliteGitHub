@@ -119,27 +119,30 @@ class TestMode extends Component {
 
     let log = '';
     let logs = this.state.logs;
-    if(this.props.debugData1 !== nextProps.debugData1){
-      log = format(new Date(), '-') + ' debugdata1 ' +  '<上报>：' + nextProps.debugData1;
-      logs.push(log);
-    }
-    if(this.props.debugData2 !== nextProps.debugData2){
-      log = format(new Date(), '-') + ' debugdata2 ' +  '<上报>：' + nextProps.debugData2;
-      logs.push(log);
-    }
-    if(this.props.debugData3 !== nextProps.debugData3){
-      log = format(new Date(), '-') + ' debugdata3 ' +  '<上报>：' + nextProps.debugData3;
-      logs.push(log);
-    }
-    if(this.props.debugData4 !== nextProps.debugData4){
-      log = format(new Date(), '-') + ' debugdata4 ' +  '<上报>：' + nextProps.debugData4;
-      logs.push(log);
-    }
-
-    // const ds1 = '01111111101010101010101010101010';
-    // const ds2 = '01111111101010101010101010101010';
-    // const ds3 = '01111111101010101010101010101010';
-    // const ds4 = '01111111101010101010101010101010';
+    let list = [ds1, ds2, ds3, ds4];
+    list.map((item, index) => {
+      let data = 0;
+      if (index === 0) data = nextProps.debugData1;
+      if (index === 1) data = nextProps.debugData2;
+      if (index === 2) data = nextProps.debugData3;
+      if (index === 3) data = nextProps.debugData4;
+      if (item.substring(8, 10) === '00') {
+        let dpCodeName = Strings.getDpLang('debugging', parseInt(item.substring(0, 8), 2));
+        if (parseInt(item.substring(0, 8), 2) < 101 || parseInt(item.substring(0, 8), 2) > 110)
+          dpCodeName = '未知功能点';
+        log = format(new Date(), '-') + ` ${index + 1}-↑↑` + dpCodeName + ' ' + '<上报>：' + data;
+        logs.push(log);
+      }
+      if (item.substring(8, 10) === '01') {
+        let dpCodeName = '引脚';
+        log = format(new Date(), '-') + ` ${index + 1}-↑↑` + dpCodeName + ' ' + '<上报>：' + data;
+        logs.push(log);
+      } else if (item.substring(8, 10) === '10' || item.substring(8, 10) === '11') {
+        let dpCodeName = '预留';
+        log = format(new Date(), '-') + ` ${index + 1}-↑↑` + dpCodeName + ' ' + '<上报>：' + data;
+        logs.push(log);
+      }
+    });
 
     this.setState({
       debugSetToString1: ds1,
@@ -208,94 +211,6 @@ class TestMode extends Component {
   // 6.通过功能点code，parseInt(xxx,2)下发
   // 7.产生日志，格式：new Date() + 功能点${功能点}下发 + debug_data_1，push进去state.logs
 
-  _onDpTypePress = item => {
-    const code = item.key;
-    // 获取key最后一位字符n，用以判断是哪一个调试设置，下发对应的调试数据debug_data_n
-    const temp = item.key.charAt(item.key.length - 1);
-    let debugDataCode = '';
-    switch (temp) {
-      case '1':
-        debugDataCode = debugData1Code;
-        break;
-      case '2':
-        debugDataCode = debugData2Code;
-        break;
-      case '3':
-        debugDataCode = debugData3Code;
-        break;
-      case '4':
-        debugDataCode = debugData4Code;
-        break;
-    }
-    // 用于拼接32位字符串下发
-    let debugSet32String = '';
-    // 用于添加日志信息
-    let logs = this.state.logs;
-    // 获取调试设置对象数组，在弹框时设置值
-    const settings = this.state.debugSettings;
-
-    // 弹框选项
-    const range = ['00', '01', '10', '11'];
-    const rangStrings = range.map(v => ({
-      key: v,
-      title: Strings.getLang('dp' + v),
-      value: v,
-    }));
-
-    Popup.list({
-      title: Strings.getLang('dpType'),
-      footerType: 'singleCancel',
-      cancelText: Strings.getLang('cancel'),
-      value: item.type,
-      dataSource: rangStrings,
-      onSelect: v => {
-        settings.map(it => {
-          if (it.key === item.key) {
-            it.dpType = v;
-          }
-        });
-        settings.map(it => {
-          if (it.key === item.key) {
-            debugSet32String =
-              it.dpOrPin +
-              it.dpType +
-              it.power +
-              it.reportingType +
-              it.cycle +
-              it.cycleUnit +
-              it.growthRate +
-              it.increaseMultiple +
-              it.reserve;
-          }
-        });
-        // 添加日志
-        let log =
-          format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
-          Strings.getLang('dpType') +
-          ' <下发>:' +
-          parseInt(v, 2);
-        //let log = debugSet32String;
-        logs.push(log);
-        TYDevice.putDeviceData({
-          [debugDataCode]: parseInt(v, 2),
-          [code]: parseInt(debugSet32String, 2),
-        });
-        this.setState({
-          debugSettings: settings,
-          logs: logs,
-        });
-
-        // TYDevice.putDeviceData({
-        // });
-
-        Popup.close();
-      },
-    });
-  };
-
   _onDpOrPinPress = items => {
     //  获取key值
     const code = items.key;
@@ -362,15 +277,13 @@ class TestMode extends Component {
         });
 
         // 添加日志
+        // log = format(new Date(), '-') + ` ${index+1}-` + dpCodeName + ' ' + '<上报>：' + data;
         let log =
           format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
+          ` ${temp}-↓↓` +
           Strings.getLang('dpOrPin') +
           ' <下发>:' +
           parseInt(binaryText, 2);
-        //let log = debugSet32String;
         logs.push(log);
 
         TYDevice.putDeviceData({
@@ -383,6 +296,175 @@ class TestMode extends Component {
         });
 
         Dialog.close();
+      },
+    });
+  };
+
+  _onDpTypePress = item => {
+    const code = item.key;
+    // 获取key最后一位字符n，用以判断是哪一个调试设置，下发对应的调试数据debug_data_n
+    const temp = item.key.charAt(item.key.length - 1);
+    let debugDataCode = '';
+    switch (temp) {
+      case '1':
+        debugDataCode = debugData1Code;
+        break;
+      case '2':
+        debugDataCode = debugData2Code;
+        break;
+      case '3':
+        debugDataCode = debugData3Code;
+        break;
+      case '4':
+        debugDataCode = debugData4Code;
+        break;
+    }
+    // 用于拼接32位字符串下发
+    let debugSet32String = '';
+    // 用于添加日志信息
+    let logs = this.state.logs;
+    // 获取调试设置对象数组，在弹框时设置值
+    const settings = this.state.debugSettings;
+
+    // 弹框选项
+    const range = ['00', '01', '10', '11'];
+    const rangStrings = range.map(v => ({
+      key: v,
+      title: Strings.getLang('dp' + v),
+      value: v,
+    }));
+
+    Popup.list({
+      title: Strings.getLang('dpType'),
+      footerType: 'singleCancel',
+      cancelText: Strings.getLang('cancel'),
+      value: item.dpType,
+      dataSource: rangStrings,
+      onSelect: v => {
+        settings.map(it => {
+          if (it.key === item.key) {
+            it.dpType = v;
+          }
+        });
+        settings.map(it => {
+          if (it.key === item.key) {
+            debugSet32String =
+              it.dpOrPin +
+              it.dpType +
+              it.power +
+              it.reportingType +
+              it.cycle +
+              it.cycleUnit +
+              it.growthRate +
+              it.increaseMultiple +
+              it.reserve;
+          }
+        });
+        // 添加日志
+        let log =
+          format(new Date(), '-') +
+          ` ${temp}-↓↓` +
+          Strings.getLang('dpType') +
+          ' <下发>:' +
+          parseInt(v, 2);
+        logs.push(log);
+
+        TYDevice.putDeviceData({
+          [debugDataCode]: parseInt(v, 2),
+          [code]: parseInt(debugSet32String, 2),
+        });
+        this.setState({
+          debugSettings: settings,
+          logs: logs,
+        });
+
+        // TYDevice.putDeviceData({
+        // });
+
+        Popup.close();
+      },
+    });
+  };
+
+  _onPowerPress = item => {
+    //  获取key值
+    const code = item.key;
+    // 获取key最后一位字符n，用以判断是哪一个调试设置，下发对应的调试数据debug_data_n
+    const temp = item.key.charAt(item.key.length - 1);
+    let debugDataCode = '';
+    switch (temp) {
+      case '1':
+        debugDataCode = debugData1Code;
+        break;
+      case '2':
+        debugDataCode = debugData2Code;
+        break;
+      case '3':
+        debugDataCode = debugData3Code;
+        break;
+      case '4':
+        debugDataCode = debugData4Code;
+        break;
+    }
+    // 用于拼接32位字符串下发
+    let debugSet32String = '';
+    // 用于添加日志信息
+    let logs = this.state.logs;
+    // 获取调试设置对象数组，在弹框时设置值
+    const settings = this.state.debugSettings;
+
+    // 弹框选项
+    const range = ['0', '1'];
+    const rangStrings = range.map(v => ({
+      key: v,
+      title: Strings.getLang('testPower' + v),
+      value: v,
+    }));
+
+    Popup.list({
+      title: Strings.getLang('testPower'),
+      footerType: 'singleCancel',
+      cancelText: Strings.getLang('cancel'),
+      value: item.power,
+      dataSource: rangStrings,
+      onSelect: v => {
+        settings.map(it => {
+          if (it.key === item.key) {
+            it.power = v;
+          }
+        });
+        settings.map(it => {
+          if (it.key === item.key) {
+            debugSet32String =
+              it.dpOrPin +
+              it.dpType +
+              it.power +
+              it.reportingType +
+              it.cycle +
+              it.cycleUnit +
+              it.growthRate +
+              it.increaseMultiple +
+              it.reserve;
+          }
+        });
+        // 添加日志
+        let log =
+          format(new Date(), '-') +
+          ` ${temp}-↓↓` +
+          Strings.getLang('testPower') +
+          ' <下发>:' +
+          parseInt(v, 2);
+        logs.push(log);
+        TYDevice.putDeviceData({
+          [debugDataCode]: parseInt(v, 2),
+          [code]: parseInt(debugSet32String, 2),
+        });
+        this.setState({
+          debugSettings: settings,
+          logs: logs,
+        });
+
+        Popup.close();
       },
     });
   };
@@ -452,13 +534,10 @@ class TestMode extends Component {
         // 添加日志
         let log =
           format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
+          ` ${temp}-↓↓` +
           Strings.getLang('reportingType') +
           ' <下发>:' +
           parseInt(v, 2);
-        //let log = debugSet32String;
         logs.push(log);
         TYDevice.putDeviceData({
           [debugDataCode]: parseInt(v, 2),
@@ -542,13 +621,10 @@ class TestMode extends Component {
         // 添加日志
         let log =
           format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
+          ` ${temp}-↓↓` +
           Strings.getLang('cycle') +
           ' <下发>:' +
           parseInt(binaryText, 2);
-        //let log = debugSet32String;
         logs.push(log);
 
         TYDevice.putDeviceData({
@@ -642,13 +718,10 @@ class TestMode extends Component {
         // 添加日志
         let log =
           format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
+          ` ${temp}-↓↓` +
           Strings.getLang('cycleUnit') +
           ' <下发>:' +
           parseInt(v, 2);
-        //let log = debugSet32String;
         logs.push(log);
         TYDevice.putDeviceData({
           [debugDataCode]: parseInt(v, 2),
@@ -732,13 +805,10 @@ class TestMode extends Component {
         // 添加日志
         let log =
           format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
+          ` ${temp}-↓↓` +
           Strings.getLang('growthRate') +
           ' <下发>:' +
           parseInt(binaryText, 2);
-        //let log = debugSet32String;
         logs.push(log);
 
         TYDevice.putDeviceData({
@@ -820,13 +890,10 @@ class TestMode extends Component {
         // 添加日志
         let log =
           format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
+          ` ${temp}-↓↓` +
           Strings.getLang('increaseMultiple') +
           ' <下发>:' +
           parseInt(v, 2);
-        //let log = debugSet32String;
         logs.push(log);
         TYDevice.putDeviceData({
           [debugDataCode]: parseInt(v, 2),
@@ -842,91 +909,7 @@ class TestMode extends Component {
     });
   };
 
-  _onPowerPress = item => {
-    //  获取key值
-    const code = item.key;
-    // 获取key最后一位字符n，用以判断是哪一个调试设置，下发对应的调试数据debug_data_n
-    const temp = item.key.charAt(item.key.length - 1);
-    let debugDataCode = '';
-    switch (temp) {
-      case '1':
-        debugDataCode = debugData1Code;
-        break;
-      case '2':
-        debugDataCode = debugData2Code;
-        break;
-      case '3':
-        debugDataCode = debugData3Code;
-        break;
-      case '4':
-        debugDataCode = debugData4Code;
-        break;
-    }
-    // 用于拼接32位字符串下发
-    let debugSet32String = '';
-    // 用于添加日志信息
-    let logs = this.state.logs;
-    // 获取调试设置对象数组，在弹框时设置值
-    const settings = this.state.debugSettings;
-
-    // 弹框选项
-    const range = ['0', '1'];
-    const rangStrings = range.map(v => ({
-      key: v,
-      title: Strings.getLang('testPower' + v),
-      value: v,
-    }));
-
-    Popup.list({
-      title: Strings.getLang('testPower'),
-      footerType: 'singleCancel',
-      cancelText: Strings.getLang('cancel'),
-      value: item.power,
-      dataSource: rangStrings,
-      onSelect: v => {
-        settings.map(it => {
-          if (it.key === item.key) {
-            it.power = v;
-          }
-        });
-        settings.map(it => {
-          if (it.key === item.key) {
-            debugSet32String =
-              it.dpOrPin +
-              it.dpType +
-              it.power +
-              it.reportingType +
-              it.cycle +
-              it.cycleUnit +
-              it.growthRate +
-              it.increaseMultiple +
-              it.reserve;
-          }
-        });
-        // 添加日志
-        let log =
-          format(new Date(), '-') +
-          ' ' +
-          debugDataCode +
-          ' ' +
-          Strings.getLang('testPower') +
-          ' <下发>:' +
-          parseInt(v, 2);
-        //let log = debugSet32String;
-        logs.push(log);
-        TYDevice.putDeviceData({
-          [debugDataCode]: parseInt(v, 2),
-          [code]: parseInt(debugSet32String, 2),
-        });
-        this.setState({
-          debugSettings: settings,
-          logs: logs,
-        });
-
-        Popup.close();
-      },
-    });
-  };
+  
 
   render() {
     let list = this.state.debugSettings;
@@ -934,25 +917,74 @@ class TestMode extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.debugSet}>
-          {/** <View style={styles.layout}>
-            <Text>{'功能点类型'}</Text>
-            <Text>{'dp点或引脚'}</Text>
-            <Text>{'上报类型'}</Text>
-            <Text>{'开关'}</Text>
-            <Text>{'周期值'}</Text>
-            <Text>{'周期单位'}</Text>
-            <Text>{'幅值'}</Text>
-            <Text>{'增幅倍数'}</Text>
-            <Text>{'开关'}</Text>
+           {/*<View style={styles.layout}>
+            <Text>{'dpOrPin'}</Text>
+            <Text>{'dpType'}</Text>
+            <Text>{'switch'}</Text>
+            <Text>{'rpType'}</Text>
+            <Text>{'cycle'}</Text>
+            <Text>{'cycleUnit'}</Text>
+            <Text>{'amplitude'}</Text>
+            <Text>{'AmplitudeRatio'}</Text>
           </View>*/}
           {list.map(item => {
             return (
               <View style={styles.layout}>
+                <TouchableOpacity onPress={() => this._onDpOrPinPress(item)}>
+                  <Text>{parseInt(item.dpOrPin, 2)}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => this._onDpTypePress(item)}>
                   <Text>{Strings.getLang('dp' + item.dpType)}</Text>
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onPowerPress(item)}>
+                  <Text>{Strings.getLang('testPower' + item.power)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onReportingTypePress(item)}>
+                  <Text>{Strings.getLang('reportingType' + item.reportingType)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onCyclePress(item)}>
+                  <Text>{parseInt(item.cycle, 2)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onCycleUnitPress(item)}>
+                  <Text>{Strings.getLang('cycleUnit' + item.cycleUnit)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onGrowthRatePress(item)}>
+                  <Text>{parseInt(item.growthRate, 2)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onIncreaseMultiplePress(item)}>
+                  <Text>{Strings.getLang('increaseMultiple' + item.increaseMultiple)}</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+        <ScrollView
+          style={styles.scrollView}
+          onContentSizeChange={() => this.ref.scrollToEnd({ animated: true })}
+          ref={ref => (this.ref = ref)}
+        >
+          <Text style={{ fontSize: 16, color: '#fff' }}>上报/下发记录</Text>
+          {this.state.logs.map(item => {
+            if (item.indexOf('下发') > -1) {
+              return <Text style={{ color: 'green' }}>{item}</Text>;
+            } else {
+              return <Text>{item}</Text>;
+            }
+          })}
+        </ScrollView>
+      </View>
+    );
+  }
+}
+/*
+{list.map(item => {
+            return (
+              <View style={styles.layout}>
                 <TouchableOpacity onPress={() => this._onDpOrPinPress(item)}>
                   <Text>{parseInt(item.dpOrPin, 2)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this._onDpTypePress(item)}>
+                  <Text>{Strings.getLang('dp' + item.dpType)}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => this._onReportingTypePress(item)}>
                   <Text>{Strings.getLang('reportingType' + item.reportingType)}</Text>
@@ -975,17 +1007,13 @@ class TestMode extends Component {
               </View>
             );
           })}
-        </View>
-        <ScrollView style={styles.scrollView}>
-          <Text style={{ fontSize: 16, color: '#fff' }}>上报记录 || 操作记录</Text>
-          {this.state.logs.map(item => {
-            return <Text>{item}</Text>;
-          })}
-        </ScrollView>
-      </View>
-    );
-  }
-}
+
+
+
+
+
+
+*/
 
 const styles = StyleSheet.create({
   container: {
